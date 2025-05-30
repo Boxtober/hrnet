@@ -1,0 +1,30 @@
+.header-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  width: 60%;
+  gap: 1rem;
+}
+
+.link-create {
+  color: #acacac;
+  font-weight: lighter;
+}
+
+.header {
+  background-color: #646cff;
+  height: auto;
+  position: relative;
+  width: 100%;
+  border-radius: 0 0 1rem 1rem;
+
+  h1 {
+    padding: 0.5rem;
+    color: white;
+    font-size: 32px;
+    text-shadow: black;
+    font-weight: bold;
+    margin: 0;
+    text-align: center;
+  }
+}
