@@ -1,75 +1,45 @@
-import React, { useState, ChangeEvent, FormEvent } from "react";
+import { useState } from "react";
 import {
+  Box,
   TextField,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
   Button,
-  Box,
 } from "@mui/material";
-import Modal from "../modal/Modal";
-import "./employeeForm.scss";
-import { SelectChangeEvent } from "@mui/material/Select";
+import Modal from "hrnet-modal-boxtober";
+import { useForm, Controller } from "react-hook-form";
+import { addEmployee, Employee } from "../../redux/employeeSlice";
+import { useAppDispatch } from "../../redux/hooks";
+import StateSelect from "../StateSelect/StateSelect";
 
-interface Employee {
-  firstName: string;
-  lastName: string;
-  birthDate: string;
-  startDate: string;
-  department: string;
-}
-
-const EmployeeForm: React.FC = () => {
-  const [formData, setFormData] = useState<Employee>({
-    firstName: "",
-    lastName: "",
-    birthDate: "",
-    startDate: "",
-    department: "",
-  });
-
-  const [employees, setEmployees] = useState<Employee[]>([]);
+const EmployeeForm = () => {
+  const dispatch = useAppDispatch();
   const [showModal, setShowModal] = useState(false);
 
-  const handleChange = (
-    e: ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | { name?: string; value: unknown }
-    >
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name as keyof Employee]: value as string,
-    }));
-  };
-  const handleSelectChange = (event: SelectChangeEvent<string>) => {
-    const { name, value } = event.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const isEmpty = Object.values(formData).some((val) => val.trim() === "");
-    if (isEmpty) {
-      alert("Please fill in all fields.");
-      return;
-    }
-
-    setEmployees((prev) => [...prev, formData]);
-    console.log("Employés enregistrés :", [...employees, formData]);
-
-    setShowModal(true);
-
-    setFormData({
+  const {
+    handleSubmit,
+    control,
+    formState: { errors },
+  } = useForm<Employee>({
+    defaultValues: {
       firstName: "",
       lastName: "",
-      birthDate: "",
+      dateOfBirth: "",
       startDate: "",
       department: "",
-    });
+      street: "",
+      city: "",
+      state: "",
+      zipCode: 0,
+    },
+  });
+
+  const onSubmit = (data: Employee) => {
+    console.log("Form submitted:", data);
+    dispatch(addEmployee(data));
+    setShowModal(true);
   };
 
   return (
@@ -77,64 +47,187 @@ const EmployeeForm: React.FC = () => {
       <Box
         component="form"
         id="create-employee"
-        onSubmit={handleSubmit}
-        sx={{ display: "flex", flexDirection: "column", gap: 2, width: 300 }}>
-        <TextField
-          label="First Name"
+        className="createemployee"
+        onSubmit={handleSubmit(onSubmit)}
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 2,
+          width: "100%",
+          padding: "4rem",
+        }}>
+        <Controller
           name="firstName"
-          value={formData.firstName}
-          onChange={handleChange}
-          required
+          control={control}
+          rules={{
+            required: "First name is required",
+            minLength: { value: 2, message: "Minimum 2 characters" },
+          }}
+          render={({ field }) => (
+            <TextField
+              {...field}
+              label="First Name"
+              error={!!errors.firstName}
+              helperText={errors.firstName?.message}
+            />
+          )}
         />
-        <TextField
-          label="Last Name"
-          name="lastName"
-          value={formData.lastName}
-          onChange={handleChange}
-          required
-        />
-        <TextField
-          label="Date of Birth"
-          type="date"
-          name="birthDate"
-          value={formData.birthDate}
-          onChange={handleChange}
-          required
-          InputLabelProps={{ shrink: true }}
-        />
-        <TextField
-          label="Start Date"
-          type="date"
-          name="startDate"
-          value={formData.startDate}
-          onChange={handleChange}
-          required
-          InputLabelProps={{ shrink: true }}
-        />
-        <FormControl required>
-          <InputLabel id="department-label">Department</InputLabel>
-          <Select
-            labelId="department-label"
-            name="department"
-            value={formData.department}
-            label="Department"
-            onChange={handleSelectChange}>
-            <MenuItem value="sales">Sales</MenuItem>
-            <MenuItem value="marketing">Marketing</MenuItem>
-            <MenuItem value="engineering">Engineering</MenuItem>
-            <MenuItem value="hr">Human Resources</MenuItem>
-            <MenuItem value="legal">Legal</MenuItem>
-          </Select>
-        </FormControl>
 
-        <Button type="submit" variant="contained" color="primary">
+        <Controller
+          name="lastName"
+          control={control}
+          rules={{
+            required: "Last name is required",
+            minLength: { value: 2, message: "Minimum 2 characters" },
+          }}
+          render={({ field }) => (
+            <TextField
+              {...field}
+              label="Last Name"
+              error={!!errors.lastName}
+              helperText={errors.lastName?.message}
+            />
+          )}
+        />
+
+        <Controller
+          name="street"
+          control={control}
+          rules={{ required: "Street is required" }}
+          render={({ field }) => (
+            <TextField
+              {...field}
+              label="Street"
+              error={!!errors.street}
+              helperText={errors.street?.message}
+            />
+          )}
+        />
+
+        <Controller
+          name="city"
+          control={control}
+          rules={{ required: "City is required" }}
+          render={({ field }) => (
+            <TextField
+              {...field}
+              label="City"
+              error={!!errors.city}
+              helperText={errors.city?.message}
+            />
+          )}
+        />
+
+        <Controller
+          name="state"
+          control={control}
+          rules={{ required: "State is required" }}
+          render={({ field }) => (
+            <StateSelect
+              {...field}
+              error={!!errors.state}
+              helperText={errors.state?.message}
+            />
+          )}
+        />
+
+        <Controller
+          name="zipCode"
+          control={control}
+          rules={{
+            required: "Zip code is required",
+            min: { value: 1000, message: "Zip code is required" },
+          }}
+          render={({ field }) => (
+            <TextField
+              {...field}
+              label="Zip Code"
+              type="number"
+              error={!!errors.zipCode}
+              helperText={errors.zipCode?.message}
+            />
+          )}
+        />
+
+        <Controller
+          name="dateOfBirth"
+          control={control}
+          rules={{ required: "Date of birth is required" }}
+          render={({ field }) => (
+            <TextField
+              {...field}
+              label="Date of Birth"
+              type="date"
+              InputLabelProps={{ shrink: true }}
+              error={!!errors.dateOfBirth}
+              helperText={errors.dateOfBirth?.message}
+            />
+          )}
+        />
+
+        <Controller
+          name="startDate"
+          control={control}
+          rules={{ required: "Start date is required" }}
+          render={({ field }) => (
+            <TextField
+              {...field}
+              label="Start Date"
+              type="date"
+              InputLabelProps={{ shrink: true }}
+              error={!!errors.startDate}
+              helperText={errors.startDate?.message}
+            />
+          )}
+        />
+
+        <Controller
+          name="department"
+          control={control}
+          rules={{ required: "Department is required" }}
+          render={({ field }) => (
+            <FormControl error={!!errors.department}>
+              <InputLabel id="department-label">Department</InputLabel>
+              <Select {...field} labelId="department-label" label="Department">
+                <MenuItem value="Sales">Sales</MenuItem>
+                <MenuItem value="Marketing">Marketing</MenuItem>
+                <MenuItem value="Engineering">Engineering</MenuItem>
+                <MenuItem value="HR">Human Resources</MenuItem>
+                <MenuItem value="Legal">Legal</MenuItem>
+              </Select>
+              {errors.department && (
+                <p
+                  style={{
+                    color: "#d32f2f",
+                    fontSize: "0.75rem",
+                    marginTop: "3px",
+                  }}>
+                  {errors.department.message}
+                </p>
+              )}
+            </FormControl>
+          )}
+        />
+
+        <Button
+          type="submit"
+          sx={{
+            height: "56px",
+            borderRadius: "4px",
+            backgroundColor: "#646cff",
+            color: "white",
+            fontFamily: '"Poppins", sans-serif',
+            fontWeight: "bold",
+            fontSize: "16px",
+            "&:hover": {
+              backgroundColor: "#4b52cc",
+            },
+          }}>
           Save
         </Button>
       </Box>
-
       <Modal show={showModal} onClose={() => setShowModal(false)} />
     </>
   );
 };
-
 export default EmployeeForm;

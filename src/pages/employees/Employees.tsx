@@ -1,4 +1,3 @@
-import React from "react";
 import "./employees.scss";
 import EmployeesTable from "../../components/employeesTable/EmployeesTable";
 import Header from "../../components/header/Header";

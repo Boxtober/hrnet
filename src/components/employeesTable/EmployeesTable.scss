@@ -1,0 +1,26 @@
+* {
+  font-family: "Poppins", sans-serif !important;
+}
+
+.bold {
+  font-weight: bold;
+}
+.paper {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.109) !important;
+  width: 90%;
+  border-radius: 0.4rem 1rem 4rem 1rem !important;
+  padding: 1rem;
+  border: 1px solid rgba(0, 0, 0, 0.109);
+}
+#root
+  > div
+  > div.MuiPaper-root.MuiPaper-elevation.MuiPaper-rounded.MuiPaper-elevation1.paper.css-1d6vya7-MuiPaper-root
+  > div.MuiTablePagination-root.css-7mt0f-MuiTablePagination-root
+  > div {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.109) !important;
+  background-color: #646cff;
+  border-radius: 0.4rem 1rem 4rem 1rem !important;
+  padding: 0.5rem;
+  color: white;
+  fill: white !important;
+}

@@ -1,8 +1,6 @@
-import React from "react";
 import "./header.scss";
 import { Link, useLocation } from "react-router-dom";
-// import { ArrowBackIcon } from "@chakra-ui/icons";
-
+import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
 const Header = () => {
   const location = useLocation();
 
@@ -14,12 +12,12 @@ const Header = () => {
       <div className="link-create">
         {location.pathname === "/" ? (
           <Link to="/employees">
-            {/* <ArrowBackIcon style={{ marginRight: "0.5rem" }} /> */}
+            <ArrowBackIosIcon style={{ marginRight: "0.5rem" }} />
             View Current Employees
           </Link>
         ) : location.pathname === "/employees" ? (
           <Link to="/">
-            {/* <ArrowBackIcon style={{ marginRight: "0.5rem" }} /> */}
+            <ArrowBackIosIcon style={{ marginRight: "0.5rem" }} />
             Home
           </Link>
         ) : null}

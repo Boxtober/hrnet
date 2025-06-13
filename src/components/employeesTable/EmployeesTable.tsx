@@ -1,148 +1,190 @@
-import * as React from "react";
-import Paper from "@mui/material/Paper";
-import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
-import TableCell from "@mui/material/TableCell";
-import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
-import TablePagination from "@mui/material/TablePagination";
-import TableRow from "@mui/material/TableRow";
+import React, { useState, useMemo } from "react";
+import {
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TablePagination,
+  TableRow,
+  TableSortLabel,
+  TextField,
+  InputAdornment,
+} from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
+
+import { useAppSelector } from "../../redux/hooks";
+import type { Employee } from "../../redux/employeeSlice";
+import "./EmployeesTable.scss";
 
 interface Column {
-  id: "name" | "code" | "population" | "size" | "density";
+  id: keyof Employee;
   label: string;
   minWidth?: number;
-  align?: "right";
-  format?: (value: number) => string;
+  align?: "right" | "left" | "center";
+  format?: (value: any) => string;
 }
 
 const columns: Column[] = [
-  { id: "name", label: "Name", minWidth: 170 },
-  { id: "code", label: "ISO\u00a0Code", minWidth: 100 },
+  { id: "firstName", label: "First Name", minWidth: 100 },
+  { id: "lastName", label: "Last Name", minWidth: 100 },
   {
-    id: "population",
-    label: "Population",
-    minWidth: 170,
-    align: "right",
-    format: (value: number) => value.toLocaleString("en-US"),
+    id: "dateOfBirth",
+    label: "Date of Birth",
+    minWidth: 120,
+    format: (value: Date) => new Date(value).toLocaleDateString(),
   },
   {
-    id: "size",
-    label: "Size\u00a0(km\u00b2)",
-    minWidth: 170,
-    align: "right",
-    format: (value: number) => value.toLocaleString("en-US"),
+    id: "startDate",
+    label: "Start Date",
+    minWidth: 120,
+    format: (value: Date) => new Date(value).toLocaleDateString(),
   },
+  { id: "department", label: "Department", minWidth: 100 },
+  { id: "street", label: "Street", minWidth: 140 },
+  { id: "city", label: "City", minWidth: 140 },
+  { id: "state", label: "State", minWidth: 40 },
   {
-    id: "density",
-    label: "Density",
-    minWidth: 170,
-    align: "right",
-    format: (value: number) => value.toFixed(2),
+    id: "zipCode",
+    label: "Zip Code",
+    minWidth: 40,
+    format: (value: number) => value.toString(),
   },
 ];
 
-interface Data {
-  name: string;
-  code: string;
-  population: number;
-  size: number;
-  density: number;
-}
+const descendingComparator = <T,>(a: T, b: T, orderBy: keyof T): number =>
+  b[orderBy] < a[orderBy] ? -1 : b[orderBy] > a[orderBy] ? 1 : 0;
 
-function createData(
-  name: string,
-  code: string,
-  population: number,
-  size: number
-): Data {
-  const density = population / size;
-  return { name, code, population, size, density };
-}
+type Order = "asc" | "desc";
 
-const rows = [
-  createData("India", "IN", 1324171354, 3287263),
-  createData("China", "CN", 1403500365, 9596961),
-  createData("Italy", "IT", 60483973, 301340),
-  createData("United States", "US", 327167434, 9833520),
-  createData("Canada", "CA", 37602103, 9984670),
-  createData("Australia", "AU", 25475400, 7692024),
-  createData("Germany", "DE", 83019200, 357578),
-  createData("Ireland", "IE", 4857000, 70273),
-  createData("Mexico", "MX", 126577691, 1972550),
-  createData("Japan", "JP", 126317000, 377973),
-  createData("France", "FR", 67022000, 640679),
-  createData("United Kingdom", "GB", 67545757, 242495),
-  createData("Russia", "RU", 146793744, 17098246),
-  createData("Nigeria", "NG", 200962417, 923768),
-  createData("Brazil", "BR", 210147125, 8515767),
-];
+const getComparator = <Key extends keyof any>(
+  order: Order,
+  orderBy: Key
+): ((a: { [key in Key]: any }, b: { [key in Key]: any }) => number) =>
+  order === "desc"
+    ? (a, b) => descendingComparator(a, b, orderBy)
+    : (a, b) => -descendingComparator(a, b, orderBy);
 
-export default function EmployeesTable() {
-  const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(10);
+const stableSort = <T,>(array: T[], comparator: (a: T, b: T) => number): T[] =>
+  array
+    .map((el, index) => [el, index] as [T, number])
+    .sort((a, b) => {
+      const order = comparator(a[0], b[0]);
+      return order !== 0 ? order : a[1] - b[1];
+    })
+    .map((el) => el[0]);
 
-  const handleChangePage = (event: unknown, newPage: number) => {
+const EmployeeTable = () => {
+  const employees = useAppSelector((state: any) => state.counter as Employee[]);
+  const [order, setOrder] = useState<Order>("asc");
+  const [orderBy, setOrderBy] = useState<keyof Employee>("firstName");
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [search, setSearch] = useState("");
+  const filtered = useMemo(() => {
+    if (!search) return employees;
+    const s = search.toLowerCase();
+    return employees.filter((e) =>
+      [
+        e.firstName,
+        e.lastName,
+        e.department,
+        e.city,
+        e.state,
+        e.zipCode.toString(),
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(s)
+    );
+  }, [employees, search]);
+
+  const sortedRows = useMemo(
+    () => stableSort(filtered, getComparator(order, orderBy)),
+    [filtered, order, orderBy]
+  );
+
+  const handleRequestSort = (property: keyof Employee) => {
+    const isAsc = orderBy === property && order === "asc";
+    setOrder(isAsc ? "desc" : "asc");
+    setOrderBy(property);
+  };
+
+  const handleChangePage = (
+    _: React.MouseEvent<HTMLButtonElement> | null,
+    newPage: number
+  ) => {
     setPage(newPage);
   };
 
   const handleChangeRowsPerPage = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    setRowsPerPage(+event.target.value);
+    setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
 
   return (
-    <Paper sx={{ width: "100%" }}>
-      <TableContainer sx={{ maxHeight: 440 }}>
-        <Table stickyHeader aria-label="sticky table">
+    <Paper sx={{ width: "100%", marginTop: 4 }} className="paper">
+      <TextField
+        placeholder="Search"
+        size="small"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        sx={{ mb: 2, width: 300 }}
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <SearchIcon />
+            </InputAdornment>
+          ),
+        }}
+      />
+
+      <TableContainer sx={{ maxHeight: 500 }}>
+        <Table stickyHeader aria-label="sortable employee table">
           <TableHead>
             <TableRow>
-              <TableCell align="center" colSpan={2}>
-                Country
-              </TableCell>
-              <TableCell align="center" colSpan={3}>
-                Details
-              </TableCell>
-            </TableRow>
-            <TableRow>
-              {columns.map((column) => (
+              {columns.map((col) => (
                 <TableCell
-                  key={column.id}
-                  align={column.align}
-                  style={{ top: 57, minWidth: column.minWidth }}>
-                  {column.label}
+                  key={col.id}
+                  align={col.align}
+                  style={{ top: 0, minWidth: col.minWidth }}
+                  sortDirection={orderBy === col.id ? order : false}
+                  className="bold">
+                  <TableSortLabel
+                    className="bold"
+                    active={orderBy === col.id}
+                    direction={orderBy === col.id ? order : "asc"}
+                    onClick={() => handleRequestSort(col.id)}>
+                    {col.label}
+                  </TableSortLabel>
                 </TableCell>
               ))}
             </TableRow>
           </TableHead>
           <TableBody>
-            {rows
+            {sortedRows
               .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((row) => {
-                return (
-                  <TableRow hover role="checkbox" tabIndex={-1} key={row.code}>
-                    {columns.map((column) => {
-                      const value = row[column.id];
-                      return (
-                        <TableCell key={column.id} align={column.align}>
-                          {column.format && typeof value === "number"
-                            ? column.format(value)
-                            : value}
-                        </TableCell>
-                      );
-                    })}
-                  </TableRow>
-                );
-              })}
+              .map((row, idx) => (
+                <TableRow hover tabIndex={-1} key={idx}>
+                  {columns.map((col) => (
+                    <TableCell key={col.id} align={col.align}>
+                      {col.format
+                        ? col.format(row[col.id])
+                        : (row[col.id] as any)}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
           </TableBody>
         </Table>
       </TableContainer>
       <TablePagination
-        rowsPerPageOptions={[10, 25, 100]}
+        rowsPerPageOptions={[5, 10, 25]}
         component="div"
-        count={rows.length}
+        count={sortedRows.length}
         rowsPerPage={rowsPerPage}
         page={page}
         onPageChange={handleChangePage}
@@ -150,4 +192,5 @@ export default function EmployeesTable() {
       />
     </Paper>
   );
-}
+};
+export default EmployeeTable;

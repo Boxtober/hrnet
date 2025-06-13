@@ -1,5 +1,3 @@
-import * as React from "react";
-
 import EmployeeForm from "../../components/EmployeeForm/EmployeeForm";
 import "./home.scss";
 import Header from "../../components/header/Header";
