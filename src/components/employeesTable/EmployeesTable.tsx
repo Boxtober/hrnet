@@ -9,14 +9,13 @@ import {
   TablePagination,
   TableRow,
   TableSortLabel,
-  TextField,
-  InputAdornment,
 } from "@mui/material";
-import SearchIcon from "@mui/icons-material/Search";
-
+import type { Order } from "../../utils/sorting";
+import { getComparator, stableSort } from "../../utils/sorting";
 import { useAppSelector } from "../../redux/hooks";
 import type { Employee } from "../../redux/employeeSlice";
 import "./EmployeesTable.scss";
+import SearchInput from "../SearchInput/SearchInput";
 
 interface Column {
   id: keyof Employee;
@@ -27,8 +26,8 @@ interface Column {
 }
 
 const columns: Column[] = [
-  { id: "firstName", label: "First Name", minWidth: 100 },
-  { id: "lastName", label: "Last Name", minWidth: 100 },
+  { id: "firstName", label: "First Name", minWidth: 140 },
+  { id: "lastName", label: "Last Name", minWidth: 140 },
   {
     id: "dateOfBirth",
     label: "Date of Birth",
@@ -53,30 +52,10 @@ const columns: Column[] = [
   },
 ];
 
-const descendingComparator = <T,>(a: T, b: T, orderBy: keyof T): number =>
-  b[orderBy] < a[orderBy] ? -1 : b[orderBy] > a[orderBy] ? 1 : 0;
-
-type Order = "asc" | "desc";
-
-const getComparator = <Key extends keyof any>(
-  order: Order,
-  orderBy: Key
-): ((a: { [key in Key]: any }, b: { [key in Key]: any }) => number) =>
-  order === "desc"
-    ? (a, b) => descendingComparator(a, b, orderBy)
-    : (a, b) => -descendingComparator(a, b, orderBy);
-
-const stableSort = <T,>(array: T[], comparator: (a: T, b: T) => number): T[] =>
-  array
-    .map((el, index) => [el, index] as [T, number])
-    .sort((a, b) => {
-      const order = comparator(a[0], b[0]);
-      return order !== 0 ? order : a[1] - b[1];
-    })
-    .map((el) => el[0]);
-
 const EmployeeTable = () => {
-  const employees = useAppSelector((state: any) => state.counter as Employee[]);
+  const employees = useAppSelector(
+    (state: any) => state.employees as Employee[]
+  );
   const [order, setOrder] = useState<Order>("asc");
   const [orderBy, setOrderBy] = useState<keyof Employee>("firstName");
   const [page, setPage] = useState(0);
@@ -85,6 +64,7 @@ const EmployeeTable = () => {
   const filtered = useMemo(() => {
     if (!search) return employees;
     const s = search.toLowerCase();
+
     return employees.filter((e) =>
       [
         e.firstName,
@@ -92,6 +72,9 @@ const EmployeeTable = () => {
         e.department,
         e.city,
         e.state,
+        e.street,
+        e.startDate,
+        e.dateOfBirth,
         e.zipCode.toString(),
       ]
         .join(" ")
@@ -127,21 +110,11 @@ const EmployeeTable = () => {
 
   return (
     <Paper sx={{ width: "100%", marginTop: 4 }} className="paper">
-      <TextField
-        placeholder="Search"
-        size="small"
+      <SearchInput
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         sx={{ mb: 2, width: 300 }}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <SearchIcon />
-            </InputAdornment>
-          ),
-        }}
       />
-
       <TableContainer sx={{ maxHeight: 500 }}>
         <Table stickyHeader aria-label="sortable employee table">
           <TableHead>
