@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { useMockData, mockEmployees } from "../utils/mockData";
 
 export interface Employee {
   firstName: string;
@@ -11,8 +12,8 @@ export interface Employee {
   state: string;
   zipCode: number;
 }
-
-const initialState: Employee[] = [];
+// const initialState: Employee[] = [];
+const initialState: Employee[] = useMockData ? [...mockEmployees] : [];
 
 const employeeSlice = createSlice({
   name: "employees",
