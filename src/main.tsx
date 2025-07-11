@@ -9,7 +9,7 @@ const theme = createTheme();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <BrowserRouter basename="/hrnet">
+    <BrowserRouter basename="/">
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <App />
